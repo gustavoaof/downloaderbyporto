@@ -53,6 +53,24 @@
             z-index: 1; 
         }
 
+        .download-count {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(60, 60, 60, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 18px;
+            color: #e0e0e0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 10; /* Colocar acima do container */
+        }
+
+        .download-count .count-text {
+            transition: transform 0.3s ease-in-out;
+        }
+
         .container.error {
             animation: shake 0.5s;
             background-color: #ff4d4d; 
@@ -208,7 +226,37 @@
     </div>
 
     <img src="../logo.png" alt="Logo" class="logo">
+    <div class="download-count" id="downloadCount">
+        <span class="count-text">Total de downloads: 0</span>
+    </div>
 
     <script src="script.js"></script>
+    <script>
+        let previousCount = 0;
+
+        async function updateDownloadCount() {
+            try {
+                const response = await fetch('/downloads/count');
+                const data = await response.json();
+                const downloadCountElement = document.getElementById('downloadCount');
+                const countTextElement = downloadCountElement.querySelector('.count-text');
+                countTextElement.textContent = `Total de downloads: ${data.count}`;
+                
+                // Adiciona animação quando o número aumenta
+                if (data.count > previousCount) {
+                    countTextElement.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        countTextElement.style.transform = 'scale(1)';
+                    }, 300);
+                }
+                previousCount = data.count;
+            } catch (error) {
+                console.error('Erro ao obter contador de downloads:', error);
+            }
+        }
+
+        // Atualizar o contador a cada 5 segundos
+        setInterval(updateDownloadCount, 5000);
+    </script>
 </body>
 </html>
