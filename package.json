@@ -1,6 +1,7 @@
 {
   "name": "youtube-downloader-web",
   "version": "1.0.0",
+  "description": "A web-based YouTube downloader",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,12 +10,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "engines": {
-    "node": "14.x"
+    "node": "14.x",
+    "npm": "6.x"  // Adicione esta linha para especificar a versão do npm
   },
   "dependencies": {
     "express": "^4.19.2",
+    "youtube-dl-exec": "^1.0.0",  // Adicionado youtube-dl-exec
     "ytdl-core": "^4.11.5"
   }
 }
