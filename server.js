@@ -2,11 +2,12 @@ const express = require('express');
 const youtubedl = require('yt-dlp-exec'); // Mantendo yt-dlp-exec como no package.json
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 const app = express();
 const port = 3001;
 
 // Caminho para o arquivo que armazena o contador de downloads
-const downloadCountFile = path.join(__dirname, 'downloads/count.txt');
+const downloadCountFile = path.join(__dirname, 'downloads/count/texte.txt');
 
 // Inicializar o contador de downloads
 let downloadCount = 0;
