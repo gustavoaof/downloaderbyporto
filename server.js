@@ -1,5 +1,5 @@
 const express = require('express');
-const youtubedl = require('youtube-dl-exec'); 
+const youtubedl = require('youtube-dl-exec');
 const fs = require('fs');
 const path = require('path');
 const app = express();
@@ -17,10 +17,10 @@ if (fs.existsSync(downloadCountFile)) {
 }
 
 // Middleware para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'src/public')));
+app.use(express.static(path.join(__dirname, 'public'))); // Assegure-se de que o caminho está correto
 
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'src/public', 'index.html');
+    const indexPath = path.join(__dirname, 'public', 'index.html'); // Assegure-se de que o caminho está correto
     res.sendFile(indexPath);
 });
 
