@@ -1,5 +1,5 @@
 const express = require('express');
-const youtubedl = require('youtube-dl-exec'); // Adicionado o youtube-dl-exec
+const { exec, spawn } = require('child_process'); // Importando exec e spawn do child_process
 const fs = require('fs');
 const path = require('path');
 const app = express();
@@ -41,56 +41,64 @@ app.get('/download', async (req, res) => {
     }
 
     try {
-        // Usando youtube-dl-exec para obter informações sobre o vídeo
-        const info = await youtubedl(url, {
-            dumpSingleJson: true,
-            noWarnings: true,
-            noCallHome: true
-        });
+        // Usando yt-dlp para obter informações sobre o vídeo
+        exec(`yt-dlp --dump-json "${url}"`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Erro ao extrair informações do vídeo: ${error.message}`);
+                return res.status(500).send('Erro ao extrair informações do vídeo');
+            }
 
-        const title = info.title.replace(/[^a-zA-Z0-9 ]/g, '');
-        let outputFilename = `${title}.${format}`;
-        let outputPath = path.resolve(__dirname, 'downloads', outputFilename);
+            const info = JSON.parse(stdout);
+            const title = info.title.replace(/[^a-zA-Z0-9 ]/g, '');
+            let outputFilename = `${title}.${format}`;
+            let outputPath = path.resolve(__dirname, 'downloads', outputFilename);
 
-        if (fs.existsSync(outputPath)) {
-            fs.unlinkSync(outputPath);
-        }
+            if (fs.existsSync(outputPath)) {
+                fs.unlinkSync(outputPath);
+            }
 
-        // Baixar o vídeo ou áudio com o youtube-dl-exec
-        if (format === 'mp4') {
-            await youtubedl(url, {
-                format: 'bestvideo+bestaudio',
-                mergeOutputFormat: 'mp4',
-                output: outputPath
-            });
-        } else {
-            const tempPath = path.resolve(__dirname, 'downloads', 'download.m4a');
-            await youtubedl(url, {
-                format: 'bestaudio',
-                output: tempPath
-            });
+            // Baixar o vídeo ou áudio com o yt-dlp
+            if (format === 'mp4') {
+                const ytDlpCommand = spawn('yt-dlp', ['-f', 'bestvideo+bestaudio', '--merge-output-format', 'mp4', '-o', outputPath, url]);
 
-            const ffmpegCommand = spawn('ffmpeg', ['-i', tempPath, format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3'), '-y']);
-            ffmpegCommand.on('close', () => {
-                res.download(outputPath, outputFilename, (err) => {
-                    if (!err) {
-                        fs.unlinkSync(outputPath);
-                        fs.unlinkSync(tempPath);
-                        // Incrementar o contador de downloads
-                        downloadCount++;
-                        fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                ytDlpCommand.on('close', (code) => {
+                    if (code === 0) {
+                        res.download(outputPath, outputFilename, (err) => {
+                            if (!err) {
+                                fs.unlinkSync(outputPath);
+                                // Incrementar o contador de downloads
+                                downloadCount++;
+                                fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                            }
+                        });
+                    } else {
+                        console.error(`yt-dlp process exited with code ${code}`);
+                        return res.status(500).send('Erro ao baixar o vídeo');
                     }
                 });
-            });
-            return;
-        }
+            } else {
+                const tempPath = path.resolve(__dirname, 'downloads', 'download.m4a');
+                const ytDlpCommand = spawn('yt-dlp', ['-f', 'bestaudio', '-o', tempPath, url]);
 
-        res.download(outputPath, outputFilename, (err) => {
-            if (!err) {
-                fs.unlinkSync(outputPath);
-                // Incrementar o contador de downloads
-                downloadCount++;
-                fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                ytDlpCommand.on('close', (code) => {
+                    if (code === 0) {
+                        const ffmpegCommand = spawn('ffmpeg', ['-i', tempPath, format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3'), '-y']);
+                        ffmpegCommand.on('close', () => {
+                            res.download(outputPath, outputFilename, (err) => {
+                                if (!err) {
+                                    fs.unlinkSync(outputPath);
+                                    fs.unlinkSync(tempPath);
+                                    // Incrementar o contador de downloads
+                                    downloadCount++;
+                                    fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                                }
+                            });
+                        });
+                    } else {
+                        console.error(`yt-dlp process exited with code ${code}`);
+                        return res.status(500).send('Erro ao baixar o áudio');
+                    }
+                });
             }
         });
     } catch (error) {
