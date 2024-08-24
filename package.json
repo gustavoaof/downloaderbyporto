@@ -1,17 +1,21 @@
 {
   "name": "youtube-downloader-web",
   "version": "1.0.0",
-  "main": "script.js",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
+  "engines": {
+    "node": "14.x"  // Especificando a versão do Node.js
+  },
   "dependencies": {
     "express": "^4.19.2",
-    "ytdl-core": "^4.11.5",
-    "youtube-dl-exec": "^1.0.0"  // Dependência adicionada
+    "youtube-dl-exec": "^1.0.0",
+    "ytdl-core": "^4.11.5"
   }
 }
