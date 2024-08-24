@@ -1,5 +1,5 @@
 const express = require('express');
-const { exec, spawn } = require('child_process'); // Importando exec e spawn do child_process
+const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const app = express();
@@ -40,71 +40,24 @@ app.get('/download', async (req, res) => {
         return res.status(400).send('Formato não suportado. Use mp4, wav ou mp3.');
     }
 
-    try {
-        // Usando yt-dlp para obter informações sobre o vídeo
-        exec(`yt-dlp --dump-json "${url}"`, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Erro ao extrair informações do vídeo: ${error.message}`);
-                return res.status(500).send('Erro ao extrair informações do vídeo');
-            }
+    const outputFilename = `output.${format}`;
+    const outputPath = path.resolve(__dirname, 'downloads', outputFilename);
 
-            const info = JSON.parse(stdout);
-            const title = info.title.replace(/[^a-zA-Z0-9 ]/g, '');
-            let outputFilename = `${title}.${format}`;
-            let outputPath = path.resolve(__dirname, 'downloads', outputFilename);
+    exec(`yt-dlp -f "bestaudio[ext=${format}]" -o "${outputPath}" "${url}"`, (error) => {
+        if (error) {
+            console.error(`Erro ao processar o download: ${error.message}`);
+            return res.status(500).send('Erro ao processar o download');
+        }
 
-            if (fs.existsSync(outputPath)) {
+        res.download(outputPath, outputFilename, (err) => {
+            if (!err) {
                 fs.unlinkSync(outputPath);
-            }
-
-            // Baixar o vídeo ou áudio com o yt-dlp
-            if (format === 'mp4') {
-                const ytDlpCommand = spawn('yt-dlp', ['-f', 'bestvideo+bestaudio', '--merge-output-format', 'mp4', '-o', outputPath, url]);
-
-                ytDlpCommand.on('close', (code) => {
-                    if (code === 0) {
-                        res.download(outputPath, outputFilename, (err) => {
-                            if (!err) {
-                                fs.unlinkSync(outputPath);
-                                // Incrementar o contador de downloads
-                                downloadCount++;
-                                fs.writeFileSync(downloadCountFile, downloadCount.toString());
-                            }
-                        });
-                    } else {
-                        console.error(`yt-dlp process exited with code ${code}`);
-                        return res.status(500).send('Erro ao baixar o vídeo');
-                    }
-                });
-            } else {
-                const tempPath = path.resolve(__dirname, 'downloads', 'download.m4a');
-                const ytDlpCommand = spawn('yt-dlp', ['-f', 'bestaudio', '-o', tempPath, url]);
-
-                ytDlpCommand.on('close', (code) => {
-                    if (code === 0) {
-                        const ffmpegCommand = spawn('ffmpeg', ['-i', tempPath, format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3'), '-y']);
-                        ffmpegCommand.on('close', () => {
-                            res.download(outputPath, outputFilename, (err) => {
-                                if (!err) {
-                                    fs.unlinkSync(outputPath);
-                                    fs.unlinkSync(tempPath);
-                                    // Incrementar o contador de downloads
-                                    downloadCount++;
-                                    fs.writeFileSync(downloadCountFile, downloadCount.toString());
-                                }
-                            });
-                        });
-                    } else {
-                        console.error(`yt-dlp process exited with code ${code}`);
-                        return res.status(500).send('Erro ao baixar o áudio');
-                    }
-                });
+                // Incrementar o contador de downloads
+                downloadCount++;
+                fs.writeFileSync(downloadCountFile, downloadCount.toString());
             }
         });
-    } catch (error) {
-        console.error(`Erro ao processar o download: ${error.message}`);
-        return res.status(500).send('Erro ao processar o download');
-    }
+    });
 });
 
 app.listen(port, () => {
