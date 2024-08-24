@@ -17,10 +17,10 @@ if (fs.existsSync(downloadCountFile)) {
 }
 
 // Middleware para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'src/public')));  // Corrigido o caminho aqui
 
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
+    const indexPath = path.join(__dirname, 'src/public', 'index.html');  // Corrigido o caminho aqui
     res.sendFile(indexPath);
 });
 
