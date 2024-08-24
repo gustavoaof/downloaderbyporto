@@ -1,5 +1,5 @@
 const express = require('express');
-const youtubedl = require('youtube-dl-exec');
+const youtubedl = require('youtube-dl-exec'); 
 const fs = require('fs');
 const path = require('path');
 const app = express();
@@ -33,10 +33,10 @@ app.get('/download', async (req, res) => {
     const url = req.query.url;
     const format = req.query.format;
 
-    console.log(`Tentando baixar URL: ${url} no formato: ${format}`);
+    console.log(`URL: ${url}`);
+    console.log(`Format: ${format}`);
 
     if (!url || !format || !['mp4', 'wav', 'mp3'].includes(format)) {
-        console.error('Formato não suportado ou URL inválida');
         return res.status(400).send('Formato não suportado. Use mp4, wav ou mp3.');
     }
 
@@ -51,8 +51,6 @@ app.get('/download', async (req, res) => {
         const title = info.title.replace(/[^a-zA-Z0-9 ]/g, '');
         let outputFilename = `${title}.${format}`;
         let outputPath = path.resolve(__dirname, 'downloads', outputFilename);
-
-        console.log(`Caminho para o arquivo gerado: ${outputPath}`);
 
         if (fs.existsSync(outputPath)) {
             fs.unlinkSync(outputPath);
@@ -76,15 +74,11 @@ app.get('/download', async (req, res) => {
             ffmpegCommand.on('close', () => {
                 res.download(outputPath, outputFilename, (err) => {
                     if (!err) {
-                        console.log('Arquivo enviado com sucesso');
                         fs.unlinkSync(outputPath);
                         fs.unlinkSync(tempPath);
                         // Incrementar o contador de downloads
                         downloadCount++;
                         fs.writeFileSync(downloadCountFile, downloadCount.toString());
-                    } else {
-                        console.error('Erro ao enviar o arquivo:', err);
-                        return res.status(404).send('Arquivo não encontrado');
                     }
                 });
             });
@@ -93,14 +87,10 @@ app.get('/download', async (req, res) => {
 
         res.download(outputPath, outputFilename, (err) => {
             if (!err) {
-                console.log('Arquivo enviado com sucesso');
                 fs.unlinkSync(outputPath);
                 // Incrementar o contador de downloads
                 downloadCount++;
                 fs.writeFileSync(downloadCountFile, downloadCount.toString());
-            } else {
-                console.error('Erro ao enviar o arquivo:', err);
-                return res.status(404).send('Arquivo não encontrado');
             }
         });
     } catch (error) {
