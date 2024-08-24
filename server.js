@@ -1,5 +1,5 @@
 const express = require('express');
-const { exec, spawn } = require('child_process');
+const youtubedl = require('youtube-dl-exec'); // Adicionado o youtube-dl-exec
 const fs = require('fs');
 const path = require('path');
 const app = express();
@@ -17,10 +17,10 @@ if (fs.existsSync(downloadCountFile)) {
 }
 
 // Middleware para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'src/public')));  // Corrigido o caminho aqui
+app.use(express.static(path.join(__dirname, 'src/public')));
 
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'src/public', 'index.html');  // Corrigido o caminho aqui
+    const indexPath = path.join(__dirname, 'src/public', 'index.html');
     res.sendFile(indexPath);
 });
 
@@ -40,13 +40,15 @@ app.get('/download', async (req, res) => {
         return res.status(400).send('Formato não suportado. Use mp4, wav ou mp3.');
     }
 
-    exec(`"${path.resolve(__dirname, 'yt-dlp.exe')}" --get-title "${url}"`, (error, stdout) => {
-        if (error) {
-            console.error(`Erro ao extrair o título: ${error.message}`);
-            return res.status(500).send('Erro ao extrair o título do vídeo');
-        }
+    try {
+        // Usando youtube-dl-exec para obter informações sobre o vídeo
+        const info = await youtubedl(url, {
+            dumpSingleJson: true,
+            noWarnings: true,
+            noCallHome: true
+        });
 
-        const title = stdout.trim().replace(/[^a-zA-Z0-9 ]/g, '');
+        const title = info.title.replace(/[^a-zA-Z0-9 ]/g, '');
         let outputFilename = `${title}.${format}`;
         let outputPath = path.resolve(__dirname, 'downloads', outputFilename);
 
@@ -54,44 +56,47 @@ app.get('/download', async (req, res) => {
             fs.unlinkSync(outputPath);
         }
 
-        let ytDlpCommand;
-
+        // Baixar o vídeo ou áudio com o youtube-dl-exec
         if (format === 'mp4') {
-            ytDlpCommand = spawn(`${path.resolve(__dirname, 'yt-dlp.exe')}`, ['-f', 'bestvideo+bestaudio[ext=mp4]', '--merge-output-format', 'mp4', '--output', outputPath, url]);
+            await youtubedl(url, {
+                format: 'bestvideo+bestaudio',
+                mergeOutputFormat: 'mp4',
+                output: outputPath
+            });
         } else {
-            const m4aPath = path.resolve(__dirname, 'downloads', 'download.m4a');
-            if (fs.existsSync(m4aPath)) {
-                fs.unlinkSync(m4aPath);
-            }
-            ytDlpCommand = spawn(`${path.resolve(__dirname, 'yt-dlp.exe')}`, ['-f', 'bestaudio', '--output', m4aPath, url]);
-            ytDlpCommand.on('close', () => {
-                const ffmpegCommand = spawn('ffmpeg', ['-i', m4aPath, format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3'), '-y']);
-                ffmpegCommand.on('close', () => {
-                    res.download(outputPath, outputFilename, (err) => {
-                        if (!err) {
-                            fs.unlinkSync(outputPath);
-                            fs.unlinkSync(m4aPath);
-                            // Incrementar o contador de downloads
-                            downloadCount++;
-                            fs.writeFileSync(downloadCountFile, downloadCount.toString());
-                        }
-                    });
+            const tempPath = path.resolve(__dirname, 'downloads', 'download.m4a');
+            await youtubedl(url, {
+                format: 'bestaudio',
+                output: tempPath
+            });
+
+            const ffmpegCommand = spawn('ffmpeg', ['-i', tempPath, format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3'), '-y']);
+            ffmpegCommand.on('close', () => {
+                res.download(outputPath, outputFilename, (err) => {
+                    if (!err) {
+                        fs.unlinkSync(outputPath);
+                        fs.unlinkSync(tempPath);
+                        // Incrementar o contador de downloads
+                        downloadCount++;
+                        fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                    }
                 });
             });
             return;
         }
 
-        ytDlpCommand.on('close', () => {
-            res.download(outputPath, outputFilename, (err) => {
-                if (!err) {
-                    fs.unlinkSync(outputPath);
-                    // Incrementar o contador de downloads
-                    downloadCount++;
-                    fs.writeFileSync(downloadCountFile, downloadCount.toString());
-                }
-            });
+        res.download(outputPath, outputFilename, (err) => {
+            if (!err) {
+                fs.unlinkSync(outputPath);
+                // Incrementar o contador de downloads
+                downloadCount++;
+                fs.writeFileSync(downloadCountFile, downloadCount.toString());
+            }
         });
-    });
+    } catch (error) {
+        console.error(`Erro ao processar o download: ${error.message}`);
+        return res.status(500).send('Erro ao processar o download');
+    }
 });
 
 app.listen(port, () => {
