@@ -1,12 +1,12 @@
 const express = require('express');
-const youtubedl = require('youtube-dl-exec');
+const youtubedl = require('yt-dlp-exec'); // Mantendo yt-dlp-exec como no package.json
 const fs = require('fs');
 const path = require('path');
 const app = express();
 const port = 3001;
 
 // Caminho para o arquivo que armazena o contador de downloads
-const downloadCountFile = path.join(__dirname, 'downloadCount.txt');
+const downloadCountFile = path.join(__dirname, 'downloads/count.txt');
 
 // Inicializar o contador de downloads
 let downloadCount = 0;
@@ -17,10 +17,10 @@ if (fs.existsSync(downloadCountFile)) {
 }
 
 // Middleware para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'public'))); // Assegure-se de que o caminho está correto
+app.use(express.static(path.join(__dirname, 'src/public')));
 
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'public', 'index.html'); // Assegure-se de que o caminho está correto
+    const indexPath = path.join(__dirname, 'src/public', 'index.html');
     res.sendFile(indexPath);
 });
 
@@ -41,7 +41,7 @@ app.get('/download', async (req, res) => {
     }
 
     try {
-        // Usando youtube-dl-exec para obter informações sobre o vídeo
+        // Usando yt-dlp-exec para obter informações sobre o vídeo
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
@@ -56,7 +56,7 @@ app.get('/download', async (req, res) => {
             fs.unlinkSync(outputPath);
         }
 
-        // Baixar o vídeo ou áudio com o youtube-dl-exec
+        // Baixar o vídeo ou áudio com yt-dlp-exec
         if (format === 'mp4') {
             await youtubedl(url, {
                 format: 'bestvideo+bestaudio',
