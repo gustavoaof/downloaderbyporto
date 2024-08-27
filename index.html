@@ -308,23 +308,22 @@
         // Atualizar o contador a cada 5 segundos
         setInterval(updateDownloadCount, 5000);
 
-        // Exibir pop-up na primeira vez que o usuário acessar o site no dia
-        document.addEventListener('DOMContentLoaded', function() {
-            const popupOverlay = document.getElementById('popupOverlay');
-            const closePopupButton = document.getElementById('closePopup');
+   document.addEventListener('DOMContentLoaded', function() {
+    const popupOverlay = document.getElementById('popupOverlay');
+    const closePopupButton = document.getElementById('closePopup');
 
-            let lastVisit = localStorage.getItem('lastVisit');
-            const today = new Date().toDateString();
+    let lastVisit = localStorage.getItem('lastVisit');
+    const today = new Date().toDateString();
 
-            if (lastVisit !== today) {
-                popupOverlay.style.display = 'flex';
-                localStorage.setItem('lastVisit', today);
-            }
+    if (lastVisit !== today) {
+        popupOverlay.style.display = 'flex';
+        localStorage.setItem('lastVisit', today);
+    }
 
-            closePopupButton.addEventListener('click', function() {
-                popupOverlay.style.display = 'none';
-            });
-        });
+    closePopupButton.addEventListener('click', function() {
+        popupOverlay.style.display = 'none';
+    });
+});
     </script>
 </body>
 </html>
