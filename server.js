@@ -52,6 +52,8 @@ app.get('/download', async (req, res) => {
             noCallHome: true
         });
 
+        console.log('Video Info:', info); // Logando as informações do vídeo
+
         const title = info.title.replace(/[^a-zA-Z0-9 ]/g, '');
         let outputFilename = `${title}.${format}`;
         let outputPath = path.resolve(__dirname, 'downloads', outputFilename);
@@ -67,6 +69,7 @@ app.get('/download', async (req, res) => {
                 mergeOutputFormat: 'mp4',
                 output: outputPath
             });
+            console.log(`MP4 Downloaded to: ${outputPath}`); // Log após o download do MP4
         } else {
             const tempPath = path.resolve(__dirname, 'downloads', 'download.m4a');
             await youtubedl(url, {
@@ -76,8 +79,11 @@ app.get('/download', async (req, res) => {
 
             const outputFinalPath = format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3');
             const ffmpegCommand = spawn('ffmpeg', ['-i', tempPath, outputFinalPath, '-y']);
+
             ffmpegCommand.on('close', (code) => {
+                console.log(`FFmpeg process exited with code: ${code}`);
                 if (code === 0) {  // Verificar se o processo terminou com sucesso
+                    console.log(`File converted to: ${outputFinalPath}`); // Log após a conversão
                     res.download(outputFinalPath, outputFilename, (err) => {
                         if (!err) {
                             fs.unlinkSync(outputFinalPath);
@@ -85,6 +91,9 @@ app.get('/download', async (req, res) => {
                             // Incrementar o contador de downloads
                             downloadCount++;
                             fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                            console.log('Download completed and files cleaned up.'); // Log após completar o download e limpar
+                        } else {
+                            console.error('Error during file download:', err);
                         }
                     });
                 } else {
@@ -101,6 +110,9 @@ app.get('/download', async (req, res) => {
                 // Incrementar o contador de downloads
                 downloadCount++;
                 fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                console.log('Download completed and files cleaned up.'); // Log após completar o download e limpar
+            } else {
+                console.error('Error during file download:', err);
             }
         });
     } catch (error) {
