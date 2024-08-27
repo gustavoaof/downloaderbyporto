@@ -6,33 +6,15 @@ const { spawn } = require('child_process');  // Correção: necessário importar
 const app = express();
 const port = 3001;
 
-// Caminho para o arquivo que armazena o contador de downloads
-const downloadCountFile = path.join(__dirname, 'downloads/count/texte.txt');
-
-// Inicializar o contador de downloads
-let downloadCount = 0;
-
-// Verificar se o arquivo do contador existe, se não, criar um
-if (fs.existsSync(downloadCountFile)) {
-    downloadCount = parseInt(fs.readFileSync(downloadCountFile, 'utf8')) || 0;
-} else {
-    fs.mkdirSync(path.dirname(downloadCountFile), { recursive: true });
-    fs.writeFileSync(downloadCountFile, '0');
-}
-
 // Middleware para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'src')));
+app.use(express.static(path.join(__dirname, 'src/public')));
 
 app.get('/', (req, res) => {
     const indexPath = path.join(__dirname, 'src/public', 'index.html');
     res.sendFile(indexPath);
 });
 
-// Rota para obter o contador de downloads
-app.get('/downloads/count', (req, res) => {
-    res.json({ count: downloadCount });
-});
-
+// Rota para download de vídeos/áudios
 app.get('/download', async (req, res) => {
     const url = req.query.url;
     const format = req.query.format;
@@ -88,9 +70,6 @@ app.get('/download', async (req, res) => {
                         if (!err) {
                             fs.unlinkSync(outputFinalPath);
                             fs.unlinkSync(tempPath);
-                            // Incrementar o contador de downloads
-                            downloadCount++;
-                            fs.writeFileSync(downloadCountFile, downloadCount.toString());
                             console.log('Download completed and files cleaned up.'); // Log após completar o download e limpar
                         } else {
                             console.error('Error during file download:', err);
@@ -107,9 +86,6 @@ app.get('/download', async (req, res) => {
         res.download(outputPath, outputFilename, (err) => {
             if (!err) {
                 fs.unlinkSync(outputPath);
-                // Incrementar o contador de downloads
-                downloadCount++;
-                fs.writeFileSync(downloadCountFile, downloadCount.toString());
                 console.log('Download completed and files cleaned up.'); // Log após completar o download e limpar
             } else {
                 console.error('Error during file download:', err);
@@ -119,6 +95,12 @@ app.get('/download', async (req, res) => {
         console.error(`Erro ao processar o download: ${error.message}`);
         return res.status(500).send('Erro ao processar o download');
     }
+});
+
+// Configuração para exibir erros no console
+process.on('uncaughtException', function (err) {
+    console.error(err.stack);
+    process.exit(1);
 });
 
 app.listen(port, () => {
