@@ -2,6 +2,7 @@ const express = require('express');
 const youtubedl = require('yt-dlp-exec'); 
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');  // Correção: necessário importar spawn
 const app = express();
 const port = 3001;
 
@@ -14,6 +15,9 @@ let downloadCount = 0;
 // Verificar se o arquivo do contador existe, se não, criar um
 if (fs.existsSync(downloadCountFile)) {
     downloadCount = parseInt(fs.readFileSync(downloadCountFile, 'utf8')) || 0;
+} else {
+    fs.mkdirSync(path.dirname(downloadCountFile), { recursive: true });
+    fs.writeFileSync(downloadCountFile, '0');
 }
 
 // Middleware para servir arquivos estáticos
@@ -70,17 +74,23 @@ app.get('/download', async (req, res) => {
                 output: tempPath
             });
 
-            const ffmpegCommand = spawn('ffmpeg', ['-i', tempPath, format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3'), '-y']);
-            ffmpegCommand.on('close', () => {
-                res.download(outputPath, outputFilename, (err) => {
-                    if (!err) {
-                        fs.unlinkSync(outputPath);
-                        fs.unlinkSync(tempPath);
-                        // Incrementar o contador de downloads
-                        downloadCount++;
-                        fs.writeFileSync(downloadCountFile, downloadCount.toString());
-                    }
-                });
+            const outputFinalPath = format === 'wav' ? outputPath : outputPath.replace(/\.wav$/, '.mp3');
+            const ffmpegCommand = spawn('ffmpeg', ['-i', tempPath, outputFinalPath, '-y']);
+            ffmpegCommand.on('close', (code) => {
+                if (code === 0) {  // Verificar se o processo terminou com sucesso
+                    res.download(outputFinalPath, outputFilename, (err) => {
+                        if (!err) {
+                            fs.unlinkSync(outputFinalPath);
+                            fs.unlinkSync(tempPath);
+                            // Incrementar o contador de downloads
+                            downloadCount++;
+                            fs.writeFileSync(downloadCountFile, downloadCount.toString());
+                        }
+                    });
+                } else {
+                    console.error('Erro no processamento do ffmpeg.');
+                    res.status(500).send('Erro no processamento do arquivo.');
+                }
             });
             return;
         }
