@@ -1,8 +1,8 @@
 const express = require('express');
-const youtubedl = require('yt-dlp-exec'); 
+const youtubedl = require('youtube-dl-exec');  // Alteração para usar youtube-dl-exec
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');  
+const { spawn } = require('child_process');
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -11,23 +11,22 @@ app.use(express.static(path.join(__dirname, 'src/public')));
 
 // Rota para servir o arquivo 'index.html'
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'src/public', 'index.html');
-    res.sendFile(indexPath);
+    res.sendFile(path.join(__dirname, 'src/public', 'index.html'));
 });
 
 // Rota para download de vídeos/áudios
 app.get('/download', async (req, res) => {
+    const url = req.query.url;
+    const format = req.query.format;
+
+    console.log(`URL: ${url}`);
+    console.log(`Format: ${format}`);
+
+    if (!url || !format || !['mp4', 'wav', 'mp3'].includes(format)) {
+        return res.status(400).send('Formato não suportado. Use mp4, wav ou mp3.');
+    }
+
     try {
-        const url = req.query.url;
-        const format = req.query.format;
-
-        console.log(`URL: ${url}`);
-        console.log(`Format: ${format}`);
-
-        if (!url || !format || !['mp4', 'wav', 'mp3'].includes(format)) {
-            return res.status(400).send('Formato não suportado. Use mp4, wav ou mp3.');
-        }
-
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
@@ -44,7 +43,7 @@ app.get('/download', async (req, res) => {
             fs.unlinkSync(outputPath);
         }
 
-        // Baixar o vídeo ou áudio com yt-dlp-exec
+        // Baixar o vídeo ou áudio com youtube-dl-exec
         if (format === 'mp4') {
             await youtubedl(url, {
                 format: 'bestvideo+bestaudio',
@@ -73,7 +72,6 @@ app.get('/download', async (req, res) => {
                             console.log('Download completed and files cleaned up.');
                         } else {
                             console.error('Error during file download:', err);
-                            res.status(500).send('Erro durante o download do arquivo.');
                         }
                     });
                 } else {
@@ -90,7 +88,6 @@ app.get('/download', async (req, res) => {
                 console.log('Download completed and files cleaned up.');
             } else {
                 console.error('Error during file download:', err);
-                res.status(500).send('Erro durante o download do arquivo.');
             }
         });
     } catch (error) {
