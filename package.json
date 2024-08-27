@@ -1,5 +1,5 @@
 {
-  "name": "downloader",
+  "name": "downloaderbyporto",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "yt-dlp-exec": "^2.0.0"
+    "yt-dlp-exec": "^1.0.0"
   }
 }
