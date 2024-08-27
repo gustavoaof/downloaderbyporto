@@ -1,5 +1,5 @@
 const express = require('express');
-const youtubedl = require('youtube-dl-exec');  // Alteração para usar youtube-dl-exec
+const youtubedl = require('yt-dlp-exec'); 
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -43,7 +43,7 @@ app.get('/download', async (req, res) => {
             fs.unlinkSync(outputPath);
         }
 
-        // Baixar o vídeo ou áudio com youtube-dl-exec
+        // Baixar o vídeo ou áudio com yt-dlp-exec
         if (format === 'mp4') {
             await youtubedl(url, {
                 format: 'bestvideo+bestaudio',
