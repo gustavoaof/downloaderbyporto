@@ -2,16 +2,16 @@ const express = require('express');
 const youtubedl = require('yt-dlp-exec'); 
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');  // Correção: necessário importar spawn
+const { spawn } = require('child_process');  
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
-// Middleware para servir arquivos estáticos
+// Middleware para servir arquivos estáticos da pasta 'src/public'
 app.use(express.static(path.join(__dirname, 'src/public')));
 
+// Rota para servir o arquivo 'index.html'
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'src/public', 'index.html');
-    res.sendFile(indexPath);
+    res.sendFile(path.join(__dirname, 'src/public', 'index.html'));
 });
 
 // Rota para download de vídeos/áudios
@@ -27,14 +27,13 @@ app.get('/download', async (req, res) => {
     }
 
     try {
-        // Usando yt-dlp-exec para obter informações sobre o vídeo
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noWarnings: true,
             noCallHome: true
         });
 
-        console.log('Video Info:', info); // Logando as informações do vídeo
+        console.log('Video Info:', info);
 
         const title = info.title.replace(/[^a-zA-Z0-9 ]/g, '');
         let outputFilename = `${title}.${format}`;
@@ -51,7 +50,7 @@ app.get('/download', async (req, res) => {
                 mergeOutputFormat: 'mp4',
                 output: outputPath
             });
-            console.log(`MP4 Downloaded to: ${outputPath}`); // Log após o download do MP4
+            console.log(`MP4 Downloaded to: ${outputPath}`);
         } else {
             const tempPath = path.resolve(__dirname, 'downloads', 'download.m4a');
             await youtubedl(url, {
@@ -64,13 +63,13 @@ app.get('/download', async (req, res) => {
 
             ffmpegCommand.on('close', (code) => {
                 console.log(`FFmpeg process exited with code: ${code}`);
-                if (code === 0) {  // Verificar se o processo terminou com sucesso
-                    console.log(`File converted to: ${outputFinalPath}`); // Log após a conversão
+                if (code === 0) {
+                    console.log(`File converted to: ${outputFinalPath}`);
                     res.download(outputFinalPath, outputFilename, (err) => {
                         if (!err) {
                             fs.unlinkSync(outputFinalPath);
                             fs.unlinkSync(tempPath);
-                            console.log('Download completed and files cleaned up.'); // Log após completar o download e limpar
+                            console.log('Download completed and files cleaned up.');
                         } else {
                             console.error('Error during file download:', err);
                         }
@@ -86,7 +85,7 @@ app.get('/download', async (req, res) => {
         res.download(outputPath, outputFilename, (err) => {
             if (!err) {
                 fs.unlinkSync(outputPath);
-                console.log('Download completed and files cleaned up.'); // Log após completar o download e limpar
+                console.log('Download completed and files cleaned up.');
             } else {
                 console.error('Error during file download:', err);
             }
