@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "yt-dlp": "^0.4.0"
+    "youtube-dl-exec": "^1.0.0"
   }
 }
