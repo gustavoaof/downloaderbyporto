@@ -304,26 +304,6 @@
     <script>
         let previousCount = 0;
 
-        async function updateDownloadCount() {
-            try {
-                const response = await fetch('/downloads/count');
-                const data = await response.json();
-                const downloadCountElement = document.getElementById('downloadCount');
-                const countTextElement = downloadCountElement.querySelector('.count-text');
-                countTextElement.textContent = `Total de downloads: ${data.count}`;
-                
-                // Adiciona animação quando o número aumenta
-                if (data.count > previousCount) {
-                    countTextElement.style.transform = 'scale(1.2)';
-                    setTimeout(() => {
-                        countTextElement.style.transform = 'scale(1)';
-                    }, 300);
-                }
-                previousCount = data.count;
-            } catch (error) {
-                console.error('Erro ao obter contador de downloads:', error);
-            }
-        }
 
         // Atualizar o contador a cada 5 segundos
         setInterval(updateDownloadCount, 5000);
