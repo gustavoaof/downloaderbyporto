@@ -54,7 +54,35 @@ function startDownload(event) {
     const downloadButton = document.getElementById('downloadButton');
     downloadButton.disabled = true;
     downloadButton.textContent = "Aguarde... 15";
-    document.getElementById('downloadForm').submit();
+
+    // Pegar URL e formato
+    const url = document.getElementById('videoUrl').value;
+    const format = document.getElementById('selectedFormat').value;
+
+    fetch(`/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(format)}`)
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('Erro no download');
+            }
+        })
+        .then(blob => {
+            // Cria um link para download do blob
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = `${format}`;
+            link.click();
+
+            // Reseta o botão
+            downloadButton.disabled = false;
+            downloadButton.textContent = "Download";
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            downloadButton.disabled = false;
+            downloadButton.textContent = "Download";
+        });
     let countdown = 15;
     const interval = setInterval(() => {
         countdown -= 1;
