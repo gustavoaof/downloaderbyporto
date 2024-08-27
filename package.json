@@ -1,5 +1,5 @@
 {
-  "name": "youtube-downloader-web",
+  "name": "downloader",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "ytdl-core": "^4.10.1"
+    "yt-dlp-exec": "^2.0.0"
   }
 }
