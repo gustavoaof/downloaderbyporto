@@ -6,160 +6,265 @@
     <title>Downloader by PORTO</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style type="text/css">
-        /* Todo o CSS conforme você forneceu */
-        body {
+        * {
+            cursor: url(https://cur.cursors-4u.net/cursors/cur-11/cur1054.cur), auto !important;
             font-family: 'Montserrat', sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            margin: 0;
-            padding: 0;
+        }
+
+        body {
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
+            margin: 0;
+            color: #e0e0e0;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0, 0, 0, 0.6) url('/mnt/data/image.png') no-repeat center center; 
+            background-size: cover; 
+            z-index: 0;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(20px); 
+            z-index: 0;
         }
 
         .container {
-            background: #fff;
+            background-color: rgba(30, 30, 30, 0.9);
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
             text-align: center;
             width: 100%;
             max-width: 400px;
-            transition: all 0.3s ease;
+            box-sizing: border-box;
+            overflow: hidden; 
+            transition: all 0.5s ease-in-out;
+            position: relative;
+            z-index: 1; 
+        }
+
+        .download-count {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(60, 60, 60, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 18px;
+            color: #e0e0e0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 10; /* Colocar acima do container */
+        }
+
+        .download-count .count-text {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .container.error {
+            animation: shake 0.5s;
+            background-color: #ff4d4d; 
+            color: white;
+        }
+
+        .error-message {
+            display: none;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .error .error-message {
+            display: block;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
         }
 
         .video-info {
-            display: none;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
+            display: none; 
+        }
+
+        .video-info img {
+            width: 100%; 
+            aspect-ratio: 16/9; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            margin-bottom: 10px; 
+        }
+
+        .video-info h3 {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #e0e0e0;
         }
 
         .video-info.show {
             display: block;
-        }
-
-        #videoThumbnail {
-            max-width: 100%;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        #videoTitle {
-            font-size: 18px;
-            margin: 0;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         input[type="text"] {
+            width: 100%;
             padding: 10px;
             margin-bottom: 10px;
-            border: 2px solid #ddd;
             border-radius: 5px;
-            font-size: 16px;
+            border: 1px solid #333;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            box-sizing: border-box;
+            text-align: center;
+            autocomplete: off;
+        }
+
+        input[type="text"]::-webkit-autofill,
+        input[type="text"]::-webkit-autofill:hover,
+        input[type="text"]::-webkit-autofill:focus,
+        input[type="text"]::-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #2c2c2c inset !important;
+            -webkit-text-fill-color: #e0e0e0 !important;
         }
 
         .format-selector {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            transition: margin-top 0.5s ease-in-out;
         }
 
         .format-button {
-            background: #ddd;
             padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
+            border-radius: 50px;
+            border: 1px solid #333;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
             cursor: pointer;
-            transition: background 0.3s ease;
-            font-size: 16px;
+            width: 70px;
+            text-align: center;
+            transition: transform 0.1s ease-in-out, background-color 0.3s ease;
+        }
+
+        .format-button:hover {
+            transform: translateY(2px);
         }
 
         .format-button.selected {
-            background: #007bff;
-            color: #fff;
+            background-color: #4caf50;
+            color: white;
+            transform: translateY(2px);
         }
 
-        button[type="submit"] {
-            background: #007bff;
-            color: #fff;
+        button {
             padding: 10px;
-            border: none;
+            margin-top: 10px;
             border-radius: 5px;
+            border: none;
+            width: 100%;
             cursor: pointer;
-            font-size: 16px;
+            background-color: #6200ea;
+            color: #e0e0e0;
+            transition: all 0.5s ease-in-out; 
+            transform: translateY(0); 
         }
 
-        .error-message {
-            color: red;
-            margin-top: 10px;
-            display: none;
+        button.hidden {
+            transform: translateY(100%); 
+            opacity: 0; 
+        }
+
+        button:disabled {
+            background-color: #444;
+            color: #777;
+            cursor: not-allowed;
         }
 
         .logo {
-            margin-top: 20px;
-            max-width: 150px;
+            display: block;
+            margin: 50px auto 0 auto;
+            width: 300px;
+            height: auto;
+            opacity: 0.8;
         }
 
-        .download-count {
-            margin-top: 10px;
-            font-size: 16px;
+        .container.move-up {
+            transform: translateY(-50px);
         }
 
+        /* Estilos do Pop-up */
         .popup-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.8);
             display: flex;
-            align-items: center;
             justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .popup-overlay.show {
-            opacity: 1;
-            visibility: visible;
+            align-items: center;
+            z-index: 100;
         }
 
         .popup {
-            background: #fff;
+            background-color: #333;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            max-width: 500px;
             text-align: center;
-            max-width: 300px;
-            width: 100%;
+            color: #e0e0e0;
+            animation: fadeIn 0.5s ease;
         }
 
         .popup h2 {
-            margin-top: 0;
-            font-size: 22px;
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #4caf50;
         }
 
         .popup p {
-            margin: 10px 0;
             font-size: 16px;
+            margin-bottom: 20px;
         }
 
         .popup button {
-            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
             border: none;
+            padding: 10px 20px;
             border-radius: 5px;
-            background: #007bff;
-            color: #fff;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .popup button:hover {
+            background-color: #45a049;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
     </style>
 </head>
@@ -171,7 +276,7 @@
         </div>
         <form id="downloadForm" action="/download" method="get" onsubmit="startDownload(event)">
             <input type="text" name="url" id="videoUrl" placeholder="Insira a URL do YouTube" autocomplete="off" required>
-            <input type="hidden" id="selectedFormat" name="format" value="mp4">
+            <input type="hidden" id="selectedFormat" name="format" value="mp4"> <!-- Campo oculto para o formato -->
             <div class="format-selector" id="formatSelector">
                 <button type="button" class="format-button selected" data-format="mp4">MP4</button>
                 <button type="button" class="format-button" data-format="mp3">MP3</button>
@@ -182,7 +287,7 @@
         <p class="error-message" id="errorMessage">Oops, URL inválida</p>
     </div>
 
-    <img src="logo.png" alt="Logo" class="logo">
+    <img src="../logo.png" alt="Logo" class="logo">
     <div class="download-count" id="downloadCount">
         <span class="count-text">Total de downloads: 0</span>
     </div>
@@ -199,111 +304,49 @@
 
     <script src="script.js"></script>
     <script>
-        document.querySelectorAll('.format-button').forEach(button => {
-            button.addEventListener('click', function() {
-                document.querySelectorAll('.format-button').forEach(btn => btn.classList.remove('selected'));
-                this.classList.add('selected');
-                document.getElementById('selectedFormat').value = this.getAttribute('data-format');
+        let previousCount = 0;
+
+        async function updateDownloadCount() {
+            try {
+                const response = await fetch('/downloads/count');
+                const data = await response.json();
+                const downloadCountElement = document.getElementById('downloadCount');
+                const countTextElement = downloadCountElement.querySelector('.count-text');
+                countTextElement.textContent = `Total de downloads: ${data.count}`;
+                
+                // Adiciona animação quando o número aumenta
+                if (data.count > previousCount) {
+                    countTextElement.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        countTextElement.style.transform = 'scale(1)';
+                    }, 300);
+                }
+                previousCount = data.count;
+            } catch (error) {
+                console.error('Erro ao obter contador de downloads:', error);
+            }
+        }
+
+        // Atualizar o contador a cada 5 segundos
+        setInterval(updateDownloadCount, 5000);
+
+        // Exibir pop-up na primeira vez que o usuário acessar o site no dia
+        document.addEventListener('DOMContentLoaded', function() {
+            const popupOverlay = document.getElementById('popupOverlay');
+            const closePopupButton = document.getElementById('closePopup');
+
+            let lastVisit = localStorage.getItem('lastVisit');
+            const today = new Date().toDateString();
+
+            if (lastVisit !== today) {
+                popupOverlay.style.display = 'flex';
+                localStorage.setItem('lastVisit', today);
+            }
+
+            closePopupButton.addEventListener('click', function() {
+                popupOverlay.style.display = 'none';
             });
         });
-
-        document.getElementById('videoUrl').addEventListener('input', async function() {
-            const url = this.value;
-            const container = document.getElementById('container');
-            const errorMessage = document.getElementById('errorMessage');
-            const downloadButton = document.getElementById('downloadButton');
-
-            const isValidUrl = isSupportedUrl(url);
-
-            if (isValidUrl) {
-                container.classList.remove('error'); 
-                errorMessage.style.display = 'none'; 
-                downloadButton.classList.remove('hidden'); 
-                try {
-                    const videoInfo = await fetchVideoInfo(url);
-                    if (videoInfo) {
-                        document.getElementById('videoThumbnail').src = videoInfo.thumbnail;
-                        document.getElementById('videoTitle').textContent = videoInfo.title;
-
-                        const videoInfoElement = document.getElementById('videoInfo');
-                        const bodyElement = document.body;
-
-                        bodyElement.style.backgroundImage = `url(${videoInfo.thumbnail})`;
-                        
-                        videoInfoElement.style.display = 'block'; 
-                        videoInfoElement.classList.add('show'); 
-                        container.classList.add('move-up');
-                    }
-                } catch (error) {
-                    console.error("Erro ao obter informações do vídeo:", error);
-                }
-            } else {
-                container.classList.add('error'); 
-                errorMessage.style.display = 'block'; 
-                downloadButton.classList.add('hidden'); 
-            }
-        });
-
-        function isSupportedUrl(url) {
-            const supportedSites = [
-                'youtube.com/watch', 
-                'youtube.com/shorts', 
-                'youtu.be'
-            ];
-            return supportedSites.some(site => url.includes(site));
-        }
-
-        function startDownload(event) {
-            event.preventDefault();
-            const downloadButton = document.getElementById('downloadButton');
-            downloadButton.disabled = true;
-            downloadButton.textContent = "Aguarde... 15";
-            document.getElementById('downloadForm').submit();
-            
-            let countdown = 15;
-            const interval = setInterval(() => {
-                countdown -= 1;
-                downloadButton.textContent = `Aguarde... ${countdown}`;
-                if (countdown <= 0) {
-                    clearInterval(interval);
-                    downloadButton.disabled = false;
-                    downloadButton.textContent = "Download";
-                }
-            }, 1000);
-        }
-
-        async function fetchVideoInfo(url) {
-            const videoId = extractVideoId(url);
-            if (!videoId) return null;
-
-            const apiUrl = `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`;
-            const response = await fetch(apiUrl);
-
-            if (!response.ok) {
-                throw new Error('Erro ao acessar a API');
-            }
-
-            const data = await response.json();
-            return {
-                title: data.title,
-                thumbnail: data.thumbnail_url
-            };
-        }
-
-        function extractVideoId(url) {
-            const videoIdMatch = url.match(/[?&]v=([^&#]*)|\/shorts\/([^\/?&]*)|youtu.be\/([^\/?&#]*)/);
-            return videoIdMatch ? (videoIdMatch[1] || videoIdMatch[2] || videoIdMatch[3]) : null;
-        }
-
-        // Pop-up Lindo
-        document.getElementById('closePopup').addEventListener('click', function() {
-            document.getElementById('popupOverlay').classList.remove('show');
-        });
-
-        // Mostrar o pop-up na primeira vez que a página é carregada
-        window.onload = function() {
-            document.getElementById('popupOverlay').classList.add('show');
-        };
     </script>
 </body>
 </html>
